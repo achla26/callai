@@ -59,7 +59,7 @@ const SignUpView = () => {
                 {
                     onSuccess: () => {
                         setStatus({ loading: false, success: "Registration successful!" });
-                        router.push("/"); // go to home (or /login)
+                        router.push("/");
                     },
                     onError: ({ error }) =>
                         setStatus({

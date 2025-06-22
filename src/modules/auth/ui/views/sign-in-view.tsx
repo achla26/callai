@@ -25,9 +25,13 @@ import { FormError, FormSuccess } from "@/components/form/FormAlert";
 import { Eye, EyeOff } from "lucide-react";
 import OAuth from "@/modules/auth/ui/views/oauth";
 
+import { useRouter } from "next/navigation";
+
 type FormData = z.infer<typeof LoginSchema>;
 
 const SignInView = () => {
+    const router = useRouter();
+
     const [showPassword, setShowPassword] = useState(false);
     const [status, setStatus] = useState<{
         loading: boolean;
@@ -47,8 +51,10 @@ const SignInView = () => {
             await authClient.signIn.email(
                 { email: data.email, password: data.password },
                 {
-                    onSuccess: () =>
-                        setStatus({ loading: false, success: "Login successful!" }),
+                    onSuccess: () => {
+                        setStatus({ loading: false, success: "Login successful!" });
+                        router.push("/");
+                    },
                     onError: ({ error }) =>
                         setStatus({
                             loading: false,
@@ -67,6 +73,7 @@ const SignInView = () => {
             await authClient.signIn.social({ provider }, {
                 onSuccess: () => {
                     setStatus({ loading: false, success: "Login successful!" });
+                    router.push("/");
                 },
                 onError: ({ error }) => {
                     setStatus({
