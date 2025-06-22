@@ -18,12 +18,12 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CardWrapper } from "@/components/cards/CardWrapper";
-import { BasicCard } from "@/components/cards/BasicCard";
+import { Button } from "@/components/ui/button";
 import { FormButton } from "@/components/form/FormButton";
 import { FormError, FormSuccess } from "@/components/form/FormAlert";
 
 import { Eye, EyeOff } from "lucide-react";
+import OAuth from "@/modules/auth/ui/views/oauth";
 
 type FormData = z.infer<typeof LoginSchema>;
 
@@ -33,6 +33,7 @@ const SignInView = () => {
         loading: boolean;
         error?: string;
         success?: string;
+        oauthLoading?: "google" | "github";
     }>({ loading: false });
 
     const form = useForm<FormData>({
@@ -60,19 +61,47 @@ const SignInView = () => {
         }
     };
 
-    return (
+    const handleOAuth = async (provider: "google" | "github") => {
+        setStatus({ ...status, oauthLoading: provider });
+        try {
+            await authClient.signIn.social({ provider }, {
+                onSuccess: () => {
+                    setStatus({ loading: false, success: "Login successful!" });
+                },
+                onError: ({ error }) => {
+                    setStatus({
+                        loading: false,
+                        error: error?.message ?? `${provider} login failed`,
+                    });
+                },
+            });
+        } catch {
+            setStatus({
+                loading: false,
+                error: `Failed to initiate ${provider} login`,
+            });
+        }
+    };
 
+
+    return (
         <div className="border-0 p-8">
             <div className="py-5">
-                <h3 className="text-lg font-semibold">Create your account</h3>
-
-                <p className="text-sm text-muted-foreground py-2">Please fill in the fields below</p>
+                <h3 className="text-lg font-semibold">Welcome back</h3>
+                <p className="text-sm text-muted-foreground py-2">
+                    Please sign in to continue
+                </p>
             </div>
+
+            <OAuth
+                isLoading={status.loading}
+                oauthLoading={status.oauthLoading}
+                onOAuthAction={handleOAuth}
+            />
+
+            {/* Email Form */}
             <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-4"
-                >
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                         control={form.control}
                         name="email"
@@ -84,7 +113,7 @@ const SignInView = () => {
                                         {...field}
                                         type="email"
                                         placeholder="john@example.com"
-                                        disabled={status.loading}
+                                        disabled={status.loading || !!status.oauthLoading}
                                     />
                                 </FormControl>
                                 <FormMessage />
@@ -104,13 +133,14 @@ const SignInView = () => {
                                             {...field}
                                             type={showPassword ? "text" : "password"}
                                             placeholder="••••••••"
-                                            disabled={status.loading}
+                                            disabled={status.loading || !!status.oauthLoading}
                                         />
                                     </FormControl>
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword((p) => !p)}
                                         className="absolute right-2 top-1/2 -translate-y-1/2"
+                                        disabled={status.loading || !!status.oauthLoading}
                                     >
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
@@ -120,20 +150,22 @@ const SignInView = () => {
                         )}
                     />
 
-                    <FormButton isLoading={status.loading} btnName="Sign In" />
+                    <FormButton
+                        isLoading={status.loading}
+                        btnName="Sign In"
+                    />
                     <FormError message={status.error} />
                     <FormSuccess message={status.success} />
                 </form>
             </Form>
 
             <p className="mt-4 text-center text-sm">
-                Don’t have an account?{" "}
+                Don't have an account?{" "}
                 <Link href="/sign-up" className="text-primary underline">
                     Register here
                 </Link>
             </p>
         </div>
-
     );
 };
 

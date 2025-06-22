@@ -11,6 +11,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { RegisterSchema } from "@/schemas/auth";
 import { authClient } from "@/lib/auth-client";
 
+import OAuth from "@/modules/auth/ui/views/oauth";
+
 import {
     Form,
     FormControl,
@@ -34,6 +36,7 @@ const SignUpView = () => {
         loading: boolean;
         error?: string;
         success?: string;
+        oauthLoading?: "google" | "github";
     }>({ loading: false });
 
     // React‑Hook‑Form
@@ -70,6 +73,28 @@ const SignUpView = () => {
         }
     };
 
+    const handleOAuth = async (provider: "google" | "github") => {
+        setStatus({ ...status, oauthLoading: provider });
+        try {
+            await authClient.signIn.social({ provider }, {
+                onSuccess: () => {
+                    setStatus({ loading: false, success: "Login successful!" });
+                },
+                onError: ({ error }) => {
+                    setStatus({
+                        loading: false,
+                        error: error?.message ?? `${provider} login failed`,
+                    });
+                },
+            });
+        } catch {
+            setStatus({
+                loading: false,
+                error: `Failed to initiate ${provider} login`,
+            });
+        }
+    };
+
     return (
 
         <div className="border-0 p-8">
@@ -78,7 +103,11 @@ const SignUpView = () => {
 
                 <p className="text-sm text-muted-foreground py-2">Please fill in the fields below</p>
             </div>
-
+            <OAuth
+                isLoading={status.loading}
+                oauthLoading={status.oauthLoading}
+                onOAuthAction={handleOAuth}
+            />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     {/* NAME */}
