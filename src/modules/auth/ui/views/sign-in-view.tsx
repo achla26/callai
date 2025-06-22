@@ -1,8 +1,14 @@
-"use client"
+"use client";
+
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
 import { LoginSchema } from "@/schemas/auth";
+import { authClient } from "@/lib/auth-client";
+
 import {
     Form,
     FormControl,
@@ -14,194 +20,120 @@ import {
 import { Input } from "@/components/ui/input";
 import { CardWrapper } from "@/components/cards/CardWrapper";
 import { BasicCard } from "@/components/cards/BasicCard";
-import { z } from "zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import Link from "next/link";
 import { FormButton } from "@/components/form/FormButton";
 import { FormError, FormSuccess } from "@/components/form/FormAlert";
-import { authClient } from "@/lib/auth-client";
-import { session } from '@/db/schema';
+
+import { Eye, EyeOff } from "lucide-react";
 
 type FormData = z.infer<typeof LoginSchema>;
 
-interface LoginFormState {
-    error?: string;
-    success?: string;
-    isLoading: boolean;
-    showPassword: boolean;
-}
 const SignInView = () => {
-
-
-    const [state, setState] = useState<LoginFormState>(() => ({
-        error: "",
-        success: "",
-        isLoading: false,
-        showPassword: false,
-    }));
-
-    const [isLoading, setIsLoading] = useState<"google" | "github" | null>(() => null);
-
-    const [showTwoFactor, setShowTwoFactor] = useState<boolean>(() => false);
-
-    const togglePasswordVisibility = () => {
-        setState((prev) => ({ ...prev, showPassword: !prev.showPassword }));
-    };
+    const [showPassword, setShowPassword] = useState(false);
+    const [status, setStatus] = useState<{
+        loading: boolean;
+        error?: string;
+        success?: string;
+    }>({ loading: false });
 
     const form = useForm<FormData>({
         resolver: zodResolver(LoginSchema),
-        defaultValues: {
-            email: "",
-            password: "",
-            remember: false,
-        },
+        defaultValues: { email: "", password: "" },
     });
 
     const onSubmit = async (data: FormData) => {
-        setState({
-            error: "",
-            success: "",
-            isLoading: true,
-            showPassword: state.showPassword,
-        });
-
+        setStatus({ loading: true });
         try {
-            // Use signIn instead of signUp
-            await authClient.signIn.email({
-                email: data.email,
-                password: data.password,
-            }, {
-                onRequest: (ctx) => {
-                    console.log("Request:", ctx);
-                },
-                onSuccess: (ctx) => {
-                    console.log("Success:", ctx);
-                    setState(prev => ({
-                        ...prev,
-                        success: "Login successful!",
-                        isLoading: false
-                    }));
-                },
-                onError: (ctx) => {
-                    console.error("Error:", ctx.error);
-                    setState(prev => ({
-                        ...prev,
-                        error: ctx.error?.message || "Login failed",
-                        isLoading: false
-                    }));
-                },
-            });
-
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                error: "An unexpected error occurred",
-                isLoading: false,
-            }));
+            await authClient.signIn.email(
+                { email: data.email, password: data.password },
+                {
+                    onSuccess: () =>
+                        setStatus({ loading: false, success: "Login successful!" }),
+                    onError: ({ error }) =>
+                        setStatus({
+                            loading: false,
+                            error: error?.message ?? "Login failed",
+                        }),
+                }
+            );
+        } catch {
+            setStatus({ loading: false, error: "Unexpected error" });
         }
     };
 
     return (
 
-        <CardWrapper cols={1} className="max-w-md mx-auto">
-            <BasicCard
-                title="Welcome Back"
-                content="Please enter your credentials"
-                className="border-0 shadow-lg"
-            >
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
+        <div className="border-0 p-8">
+            <div className="py-5">
+                <h3 className="text-lg font-semibold">Create your account</h3>
 
+                <p className="text-sm text-muted-foreground py-2">Please fill in the fields below</p>
+            </div>
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                >
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        type="email"
+                                        placeholder="john@example.com"
+                                        disabled={status.loading}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <div className="relative">
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            disabled={status.loading}
+                                        />
+                                    </FormControl>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword((p) => !p)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-sm font-medium text-gray-700">
-                                            Email
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                disabled={state.isLoading}
-                                                type="email"
-                                                placeholder="john@example.com"
-                                                autoComplete="email"
-                                                className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-xs text-red-500" />
-                                    </FormItem>
-                                )}
-                            />
+                    <FormButton isLoading={status.loading} btnName="Sign In" />
+                    <FormError message={status.error} />
+                    <FormSuccess message={status.success} />
+                </form>
+            </Form>
 
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Password</FormLabel>
-                                        <div className="relative">
-                                            <FormControl>
-                                                <Input
-                                                    disabled={state.isLoading}
-                                                    type={state.showPassword ? "text" : "password"}
-                                                    placeholder="••••••••"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                                onClick={togglePasswordVisibility}
-                                            >
-                                                {state.showPassword ? (
-                                                    <EyeOff size={16} />
-                                                ) : (
-                                                    <Eye size={16} />
-                                                )}
-                                            </button>
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+            <p className="mt-4 text-center text-sm">
+                Don’t have an account?{" "}
+                <Link href="/sign-up" className="text-primary underline">
+                    Register here
+                </Link>
+            </p>
+        </div>
 
-                        </div>
-
-                        {/* Submit Button */}
-                        <FormButton isLoading={state.isLoading} btnName="Sign Up" />
-
-                        <FormError message={state.error} />
-                        <FormSuccess message={state.success} />
-
-                    </form>
-                </Form>
-                <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">
-                            Or continue with
-                        </span>
-                    </div>
-                </div>
-
-                {/* Social Login Buttons */}
-
-                <div className="text-center text-sm mt-4">
-                    Already have an account?{" "}
-                    <Link href="/login" className="text-primary hover:underline">
-                        Register here
-                    </Link>
-                </div>
-            </BasicCard>
-        </CardWrapper>
     );
 };
 

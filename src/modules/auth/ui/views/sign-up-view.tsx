@@ -1,8 +1,16 @@
-"use client"
+"use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
+
 import { RegisterSchema } from "@/schemas/auth";
+import { authClient } from "@/lib/auth-client";
+
 import {
     Form,
     FormControl,
@@ -12,242 +20,172 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { CardWrapper } from "@/components/cards/CardWrapper";
-import { BasicCard } from "@/components/cards/BasicCard";
-import { z } from "zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import Link from "next/link";
 import { FormButton } from "@/components/form/FormButton";
 import { FormError, FormSuccess } from "@/components/form/FormAlert";
-import { authClient } from "@/lib/auth-client";
-import { session } from '@/db/schema';
-import router from "next/router";
 
 type FormData = z.infer<typeof RegisterSchema>;
 
-interface RegisterFormState {
-    error?: string;
-    success?: string;
-    isLoading: boolean;
-    showPassword: boolean;
-}
 const SignUpView = () => {
+    const router = useRouter();
 
+    // UI helpers
+    const [showPassword, setShowPassword] = useState(false);
+    const [status, setStatus] = useState<{
+        loading: boolean;
+        error?: string;
+        success?: string;
+    }>({ loading: false });
 
-    const [state, setState] = useState<RegisterFormState>(() => ({
-        error: "",
-        success: "",
-        isLoading: false,
-        showPassword: false,
-    }));
-
-    const [isLoading, setIsLoading] = useState<"google" | "github" | null>(() => null);
-
-    const [showTwoFactor, setShowTwoFactor] = useState<boolean>(() => false);
-
-
-
+    // React‑Hook‑Form
     const form = useForm<FormData>({
         resolver: zodResolver(RegisterSchema),
         defaultValues: {
             name: "",
             email: "",
-            password: ""
+            password: "",
+            confirmPassword: "",
         },
     });
 
+    /** Handle submit */
     const onSubmit = async (data: FormData) => {
-        setState({
-            error: "",
-            success: "",
-            isLoading: true,
-            showPassword: state.showPassword,
-        });
-
+        setStatus({ loading: true });
         try {
-            // Use signup instead of signUp
-            await authClient.signUp.email({
-                email: data.email,
-                password: data.password,
-                name: data.name
-            }, {
-                onRequest: (ctx) => {
-                    console.log("Request:", ctx);
-                },
-                onSuccess: (ctx) => {
-                    setState(prev => ({
-                        ...prev,
-                        success: "Register successful!",
-                        isLoading: false
-                    }));
-                    router.push("/");
-                },
-                onError: (ctx) => {
-                    console.error("Error:", ctx.error);
-                    setState(prev => ({
-                        ...prev,
-                        error: ctx.error?.message || "Register failed",
-                        isLoading: false
-                    }));
-                },
-            });
-
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                error: "An unexpected error occurred",
-                isLoading: false,
-            }));
+            await authClient.signUp.email(
+                { email: data.email, password: data.password, name: data.name },
+                {
+                    onSuccess: () => {
+                        setStatus({ loading: false, success: "Registration successful!" });
+                        router.push("/"); // go to home (or /login)
+                    },
+                    onError: ({ error }) =>
+                        setStatus({
+                            loading: false,
+                            error: error?.message ?? "Registration failed",
+                        }),
+                }
+            );
+        } catch {
+            setStatus({ loading: false, error: "Unexpected error" });
         }
-    };
-
-    const togglePasswordVisibility = () => {
-        setState((prev) => ({ ...prev, showPassword: !prev.showPassword }));
     };
 
     return (
 
-        <CardWrapper cols={1} className="max-w-md mx-auto">
-            <BasicCard
-                title="Welcome Back"
-                content="Please enter your credentials"
-                className="border-0 shadow-lg"
-            >
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="name"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-sm font-medium text-gray-700">
-                                            Full Name
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                disabled={state.isLoading}
-                                                placeholder="John Doe"
-                                                autoComplete="name"
-                                                className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-xs text-red-500" />
-                                    </FormItem>
-                                )}
-                            />
+        <div className="border-0 p-8">
+            <div className="py-5">
+                <h3 className="text-lg font-semibold">Create your account</h3>
 
+                <p className="text-sm text-muted-foreground py-2">Please fill in the fields below</p>
+            </div>
 
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-sm font-medium text-gray-700">
-                                            Email
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                disabled={state.isLoading}
-                                                type="email"
-                                                placeholder="john@example.com"
-                                                autoComplete="email"
-                                                className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-xs text-red-500" />
-                                    </FormItem>
-                                )}
-                            />
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    {/* NAME */}
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        placeholder="John Doe"
+                                        disabled={status.loading}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Password</FormLabel>
-                                        <div className="relative">
-                                            <FormControl>
-                                                <Input
-                                                    disabled={state.isLoading}
-                                                    type={state.showPassword ? "text" : "password"}
-                                                    placeholder="••••••••"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <button
-                                                type="button"
-                                                className="absolute right-2 top-1/2 transform -translate-y-1/2"
-                                                onClick={togglePasswordVisibility}
-                                            >
-                                                {state.showPassword ? (
-                                                    <EyeOff size={16} />
-                                                ) : (
-                                                    <Eye size={16} />
-                                                )}
-                                            </button>
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                    {/* EMAIL */}
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        type="email"
+                                        placeholder="john@example.com"
+                                        disabled={status.loading}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                            <FormField
-                                control={form.control}
-                                name="confirmPassword"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-sm font-medium text-gray-700">
-                                            Confirm Password
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="password"
-                                                disabled={state.isLoading}
-                                                placeholder="••••••••"
-                                                autoComplete="new-password"
-                                                className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-xs text-red-500" />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                    {/* PASSWORD */}
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <div className="relative">
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            type={showPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            disabled={status.loading}
+                                        />
+                                    </FormControl>
+                                    <button
+                                        type="button"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                                        onClick={() => setShowPassword((p) => !p)}
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        {/* Submit Button */}
-                        <FormButton isLoading={state.isLoading} btnName="Sign Up" />
+                    {/* CONFIRM PASSWORD */}
+                    <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Confirm Password</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        {...field}
+                                        type="password"
+                                        placeholder="••••••••"
+                                        autoComplete="new-password"
+                                        disabled={status.loading}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <FormError message={state.error} />
-                        <FormSuccess message={state.success} />
+                    {/* SUBMIT */}
+                    <FormButton isLoading={status.loading} btnName="Sign Up" />
 
-                    </form>
-                </Form>
-                <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">
-                            Or continue with
-                        </span>
-                    </div>
-                </div>
+                    {/* ALERTS */}
+                    <FormError message={status.error} />
+                    <FormSuccess message={status.success} />
+                </form>
+            </Form>
 
-                {/* Social Login Buttons */}
-
-                <div className="text-center text-sm mt-4">
-                    Already have an account?{" "}
-                    <Link href="/login" className="text-primary hover:underline">
-                        Login here
-                    </Link>
-                </div>
-            </BasicCard>
-        </CardWrapper>
+            <p className="mt-4 text-center text-sm">
+                Already have an account?{" "}
+                <Link href="/sign-in" className="text-primary underline">
+                    Log in here
+                </Link>
+            </p>
+        </div>
     );
 };
 
