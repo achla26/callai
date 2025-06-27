@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/auth';
+import { authClient } from '@/lib/auth-client';
 
 export const useSession = (redirectUrl = "/sign-in") => {
     const router = useRouter();
@@ -12,10 +12,10 @@ export const useSession = (redirectUrl = "/sign-in") => {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                // Client-side session check only
-                const session = await auth.api.getSession();
+                // Use Better Auth's client-side session check
+                const { data: session, error } = await authClient.getSession();
 
-                if (!session) {
+                if (error || !session) {
                     router.push(redirectUrl);
                 } else {
                     setSession(session);

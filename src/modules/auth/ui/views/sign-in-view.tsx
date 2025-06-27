@@ -53,7 +53,7 @@ const SignInView = () => {
                 {
                     onSuccess: () => {
                         setStatus({ loading: false, success: "Login successful!" });
-                        router.push("/");
+                        router.push("/dashboard");
                     },
                     onError: ({ error }) =>
                         setStatus({
@@ -73,7 +73,7 @@ const SignInView = () => {
             await authClient.signIn.social({ provider }, {
                 onSuccess: () => {
                     setStatus({ loading: false, success: "Login successful!" });
-                    router.push("/");
+                    router.push("/dashboard");
                 },
                 onError: ({ error }) => {
                     setStatus({

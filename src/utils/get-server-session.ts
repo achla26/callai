@@ -24,10 +24,18 @@ export async function requireServerSession() {
     return session;
 }
 
+export async function authRedirect() {
+    const session = await getServerSession();
+
+    if (!!session) {
+        redirect('/home');
+    }
+    return session;
+}
+
+
 export const requireAuth = async (redirectUrl = "/sign-in") => {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
+    const session = await getServerSession();
 
     if (!session) {
         redirect(redirectUrl);
