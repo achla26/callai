@@ -1,7 +1,5 @@
-"use client"
+"use client";
 
-import { LogOut, ChevronDown, User, Settings, HelpCircle } from 'lucide-react';
-import { authClient } from "@/lib/auth-client";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,99 +8,91 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@radix-ui/react-dropdown-menu";
+
+import { ChevronDown, CreditCard, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Link from 'next/link';
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const DashboardUserButton = () => {
+    const router = useRouter();
     const { data, isPending } = authClient.useSession();
 
-    if (isPending || !data?.user) {
-        return null;
+    const onLogOut = () => {
+        authClient.signOut({
+            fetchOptions: {
+                onSuccess: () => {
+                    router.push('/signin')
+                }
+            }
+        })
     }
+
+    if (isPending || !data?.user) return null;
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <button
                     className={cn(
-                        "w-full h-10 px-3 flex items-center justify-between",
-                        "rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        "w-full h-15 px-3 flex items-center justify-between",
+                        "rounded-md hover:bg-primary ",
                         "transition-colors focus-visible:outline-none focus-visible:ring-2",
-                        "focus-visible:ring-sidebar-ring focus-visible:ring-offset-2",
-                        "ring-offset-sidebar"
+                        "focus-visible:ring-ring focus-visible:ring-offset-2",
+                        "ring-offset-background glass text-primary-foreground ",
                     )}
                 >
-                    <div className="flex items-center gap-2">
-                        <div className="size-6 rounded-full bg-sidebar-primary flex items-center justify-center">
-                            <User className="size-3.5 text-sidebar-primary-foreground" />
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        <div className="size-10 flex-shrink-0 rounded-full bg-yellow-400 flex items-center justify-center text-xs font-bold uppercase">
+                            {(data.user.name?.slice(0, 2) || "UA")}
                         </div>
-                        <span className="text-sm font-medium tracking-tight">
-                            {data.user.name || "Account"}
-                        </span>
+                        <div className="flex flex-col items-start overflow-hidden">
+                            <span className="text-sm font-medium truncate">
+                                {data.user.name}
+                            </span>
+                            <span className="text-sm truncate">
+                                {data.user.email}
+                            </span>
+                        </div>
+
                     </div>
                     <ChevronDown className="size-4 opacity-70" />
                 </button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
-                align="start"
-                side="top"
+                align="end"
+                side="left"
                 className={cn(
-                    "w-[var(--radix-dropdown-menu-trigger-width)]",
-                    "bg-sidebar border border-sidebar-border rounded-md",
-                    "shadow-lg overflow-hidden z-50 p-1",
-                    "data-[side=top]:mb-2 "
+                    "w-[260px]   border border-border rounded-md",
+                    "shadow-lg overflow-hidden z-50 p-1 bg-background border-0 text-foreground",
                 )}
             >
-                <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground ">
-                    <h4 className='text-[14px] mb-1.5'>{data.user.name}</h4>
-                    <p>{data.user.email}</p>
+                <DropdownMenuLabel className="px-2 py-1.5 text-xs ">
+                    <h4 className="text-[14px] font-medium mb-1.5">{data.user.name}</h4>
+                    <p className="text-xs">{data.user.email}</p>
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator className="h-px bg-sidebar-border my-1" />
 
-                <DropdownMenuItem asChild>
-                    <Link
-                        href="/settings"
-                        className={cn(
-                            "flex items-center gap-2 px-2 py-1.5 rounded-sm",
-                            "text-sm cursor-pointer hover:bg-sidebar-accent",
-                            "hover:text-sidebar-accent-foreground outline-none"
-                        )}
-                    >
-                        <Settings className="size-4" />
-                        Settings
-                    </Link>
+                <DropdownMenuItem
+                    onSelect={() => {
+                        window.location.href = "/billing";
+                    }}
+                    className="flex items-center justify-between border-0 gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer hover-bg"
+                >
+                    Billing
+                    <CreditCard className="size-4 text-muted" />
+
                 </DropdownMenuItem>
 
-                <DropdownMenuItem asChild>
-                    <Link
-                        href="/help"
-                        className={cn(
-                            "flex items-center gap-2 px-2 py-1.5 rounded-sm",
-                            "text-sm cursor-pointer hover:bg-sidebar-accent",
-                            "hover:text-sidebar-accent-foreground outline-none"
-                        )}
-                    >
-                        <HelpCircle className="size-4" />
-                        Help Center
-                    </Link>
-                </DropdownMenuItem>
+                <DropdownMenuItem
+                    onClick={onLogOut}
+                    className="flex items-center justify-between hover-bg gap-2 px-2 py-1.5 rounded-sm text-sm cursor-pointer border-0"
+                >
+                    Logout
+                    <LogOut className="size-4 text-muted" />
 
-                <DropdownMenuSeparator className="h-px bg-sidebar-border my-1" />
-
-                <DropdownMenuItem asChild>
-                    <button
-                        onClick={() => authClient.signOut()}
-                        className={cn(
-                            "w-full flex items-center gap-2 px-2 py-1.5 rounded-sm",
-                            "text-sm cursor-pointer text-red-500 hover:bg-red-500/10",
-                            "hover:text-red-600 outline-none"
-                        )}
-                    >
-                        <LogOut className="size-4" />
-                        Sign Out
-                    </button>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

@@ -42,7 +42,10 @@ const SignInView = () => {
 
     const form = useForm<FormData>({
         resolver: zodResolver(LoginSchema),
-        defaultValues: { email: "", password: "" },
+        defaultValues: {
+            email: "user@gmail.com",
+            password: "Password123@"
+        },
     });
 
     const onSubmit = async (data: FormData) => {
@@ -95,7 +98,7 @@ const SignInView = () => {
         <div className="border-0 p-8">
             <div className="py-5">
                 <h3 className="text-lg font-semibold">Welcome back</h3>
-                <p className="text-sm text-muted-foreground py-2">
+                <p className="text-sm text-muted py-2">
                     Please sign in to continue
                 </p>
             </div>
@@ -168,7 +171,7 @@ const SignInView = () => {
 
             <p className="mt-4 text-center text-sm">
                 Don't have an account?{" "}
-                <Link href="/sign-up" className="text-primary underline">
+                <Link href="/sign-up" className="underline">
                     Register here
                 </Link>
             </p>

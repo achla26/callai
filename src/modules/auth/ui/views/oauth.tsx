@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Icons } from '@/components/common/Icons';
 
+
 interface OAuthProps {
     isLoading: boolean;
     oauthLoading?: "google" | "github";
@@ -16,27 +17,29 @@ const OAuth = ({ isLoading, oauthLoading, onOAuthAction }: OAuthProps) => {
             <div className="grid grid-cols-2 gap-2 mb-6">
                 <Button
                     variant="outline"
+                    type="button"
                     onClick={() => onOAuthAction("google")}
                     disabled={isLoading || oauthLoading === "google"}
+                    className="w-full border-gray-300 "
                 >
                     {oauthLoading === "google" ? (
                         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                         <Icons.google className="mr-2 h-4 w-4" />
-                    )}
-                    Google
+                    )}Google
                 </Button>
                 <Button
                     variant="outline"
+                    type="button"
                     onClick={() => onOAuthAction("github")}
-                    disabled={isLoading || oauthLoading === "github"}
+                    disabled={isLoading || oauthLoading === "github"} className="border-gray-300 "
                 >
                     {oauthLoading === "github" ? (
                         <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                         <Icons.gitHub className="mr-2 h-4 w-4" />
                     )}
-                    GitHub
+                    Github
                 </Button>
             </div>
 
@@ -46,7 +49,7 @@ const OAuth = ({ isLoading, oauthLoading, onOAuthAction }: OAuthProps) => {
                     <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
+                    <span className="px-2 text-muted">
                         Or continue with
                     </span>
                 </div>

@@ -1,6 +1,7 @@
 import { requireAuth } from '@/utils/get-server-session';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import DashboardSidebar from '@/modules/dashboard/ui/components/dashboard-sidebar';
+import DashboardNavbar from '@/modules/dashboard/ui/components/dashboard-navbar';
 export default async function Layout({
     children
 }: {
@@ -10,7 +11,8 @@ export default async function Layout({
     return (
         <SidebarProvider>
             <DashboardSidebar />
-            <main className='flex flex-col h-screen w-screen text-black bg-amber-50'>
+            <main className='flex flex-col h-screen w-screen'>
+                <DashboardNavbar />
                 {children}
             </main>
         </SidebarProvider>

@@ -11,4 +11,4 @@ const LoginSchema = z.object({
 
 export default LoginSchema;
 
-export type RegisterType = z.infer<typeof LoginSchema>;
+export type LoginType = z.infer<typeof LoginSchema>;
