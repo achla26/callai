@@ -5,21 +5,30 @@ import { TRPCError } from "@trpc/server";
 
 export const agentsRouter = createTRPCRouter({
     getAll: baseProcedure.query(async () => {
-        const data = await db.select().from(agents);
+        try {
+            const data = await db.select().from(agents);
 
-        // await new Promise((resolve) => setTimeout(resolve, 50000));
+            // await new Promise((resolve) => setTimeout(resolve, 50000));
 
-        throw new TRPCError({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to retrieve agents',
-        })
-        // if (!data || data.length === 0) {
-        //     throw new TRPCError({
-        //         code: 'NOT_FOUND',
-        //         message: 'No agents found',
-        //     });
-        // }
-        return data;
+            // throw new TRPCError({
+            //     code: 'INTERNAL_SERVER_ERROR',
+            //     message: 'Failed to retrieve agents',
+            // })
+            // if (!data || data.length === 0) {
+            //     throw new TRPCError({
+            //         code: 'NOT_FOUND',
+            //         message: 'No agents found',
+            //     });
+            // }
+            return data;
+        } catch (err) {
+            throw new TRPCError({
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Failed to retrieve agents',
+            });
+        }
+
+
     }),
 
 
