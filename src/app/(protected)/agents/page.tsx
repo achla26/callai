@@ -3,7 +3,7 @@ import { getQueryClient, trpc } from '@/trpc/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense } from 'react';
-import AgentListHeader from '@/modules/agents/ui/views/agent-list-header';
+import AgentListHeader from '@/modules/agents/ui/components/agent-list-header';
 
 const page = async () => {
     const queryClient = getQueryClient();

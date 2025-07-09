@@ -7,18 +7,22 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 
 export const agentsRouter = createTRPCRouter({
-    // TODO: Change to use `protecedProcedure`
 
-    getOne: protectedProcedure.input(z.object({ id: z.string() })).query(async () => {
+    getOne: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
         try {
-            const data = await db
-                .select({
-                    name: agents.name,
-                })
+            const [existingAgent] = await db
+                .select()
                 .from(agents)
                 .where(eq(agents.id, input.id));
 
-            return data;
+            if (!existingAgent) {
+                throw new TRPCError({
+                    code: 'NOT_FOUND',
+                    message: `Āgent with ID ${input.id} not found`
+                })
+            }
+
+            return existingAgent;
         } catch (err) {
             throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
@@ -28,22 +32,14 @@ export const agentsRouter = createTRPCRouter({
 
 
     }),
-    getAll: protectedProcedure.query(async () => {
+    getAll: protectedProcedure.query(async ({ ctx }) => {
         try {
-            const data = await db.select().from(agents);
+            const data = await db
+                .select()
+                .from(agents)
+                .where(eq(agents.userId, ctx.auth.user.id));
 
-            // await new Promise((resolve) => setTimeout(resolve, 50000));
 
-            // throw new TRPCError({
-            //     code: 'INTERNAL_SERVER_ERROR',
-            //     message: 'Failed to retrieve agents',
-            // })
-            // if (!data || data.length === 0) {
-            //     throw new TRPCError({
-            //         code: 'NOT_FOUND',
-            //         message: 'No agents found',
-            //     });
-            // }
             return data;
         } catch (err) {
             throw new TRPCError({

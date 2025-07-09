@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
-import { AgentDialog } from "@/modules/agents/ui/views/agent-dialog";
+import { AgentDialog } from "@/modules/agents/ui/components/agent-dialog";
 
 interface AgentListHeaderProps {
     title: string;
