@@ -1,12 +1,12 @@
+import z from "zod";
+import { toast } from "sonner";
+
 import { AgentGetOne } from "@/modules/agents/types";
 
 import { useTRPC } from "@/trpc/client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { useRouter } from "next/router";
-
-import z from "zod";
 import { agentInsertSchema } from "@/modules/agents/schema";
 
 import { useForm } from "react-hook-form";
@@ -24,11 +24,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { GeneratedAvatar } from "@/components/generated-avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 interface AgentFormProps {
     onSuccess: () => void;
     onCancel: () => void;
-    initialValues?: AgentGetOne
+    initialValues?: AgentGetOne;
 }
 
 export const AgentForm = ({
@@ -38,15 +40,32 @@ export const AgentForm = ({
 }: AgentFormProps) => {
 
     const trpc = useTRPC();
-    const router = useRouter();
     const queryClient = useQueryClient();
 
     const createAgent = useMutation(
         trpc.agents.create.mutationOptions({
-            onSuccess: () => { },
-            onError: () => { }
+            onSuccess: async () => {
+                await queryClient.invalidateQueries(
+                    trpc.agents.getAll.queryOptions(),
+                );
+
+                if (initialValues?.id) {
+                    await queryClient.invalidateQueries(
+                        trpc.agents.getOne.queryOptions({
+                            id: initialValues.id
+                        }),
+                    );
+                }
+
+                toast.success("Create successful");
+                onSuccess?.();
+            },
+            onError: (error) => {
+                toast.error("Create failed", error);
+                //TODO - check if error code is forbidden, redirect to /upgrade
+            }
         })
-    )
+    );
 
     const form = useForm<z.infer<typeof agentInsertSchema>>({
         resolver: zodResolver(agentInsertSchema),
@@ -59,19 +78,18 @@ export const AgentForm = ({
     const isEdit = !!initialValues?.id;
     const isPending = createAgent.isPending;
 
-    // Submit handler for the form
     const onSubmit = (values: z.infer<typeof agentInsertSchema>) => {
         if (isEdit) {
-            console.log("TODO: updateagent");
+            console.log("TODO: update agent");
         } else {
             createAgent.mutate(values);
         }
     };
 
-    <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-
+    return (
         <Form {...form}>
             <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+                <GeneratedAvatar />
                 <FormField
                     control={form.control}
                     name="name"
@@ -79,7 +97,11 @@ export const AgentForm = ({
                         <FormItem>
                             <FormLabel>Name</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Enter agent name" {...field} />
+                                <Input
+                                    {...field}
+                                    type="text"
+                                    placeholder="e.g. Math tutor"
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -92,16 +114,33 @@ export const AgentForm = ({
                         <FormItem>
                             <FormLabel>Instructions</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Enter agent instructions" {...field} />
+                                <Textarea placeholder="You are a helpful assistant that can answer questions and help with assignments." {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                {/* Form fields go here */}
-                <button type="submit" onClick={onSuccess}>Submit</button>
-                <button type="button" onClick={onCancel}>Cancel</button>
+
+                <div className="flex  justify-between gap-x-2">
+                    {onCancel && (
+                        <Button
+                            variant='ghost'
+                            disabled={isPending}
+                            type="button"
+                            onClick={() => onCancel()}
+                        >
+                            Cancel
+                        </Button>
+                    )}
+                    <Button
+                        disabled={isPending}
+                        type="submit"
+                    >
+                        {isEdit ? "Update Agent" : "Create Agent"}
+                    </Button>
+
+                </div>
             </form>
         </Form>
-        );
-}
+    );
+};

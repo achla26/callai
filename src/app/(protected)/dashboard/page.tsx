@@ -1,7 +1,9 @@
 import HomeView from '@/modules/home/ui/views/home-view';
 
-const Page = async () => {
+import { requireServerSession } from "@/utils/get-server-session";
 
+const Page = async () => {
+    await requireServerSession();
     return <HomeView />;
 };
 

@@ -8,7 +8,9 @@ import { redirect } from 'next/navigation';
  */
 export async function getServerSession() {
     // `headers()` is synchronous – no need to `await` it
-    const session = await auth.api.getSession({ headers: await headers(), });
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
     return session ?? null;
 }
 
