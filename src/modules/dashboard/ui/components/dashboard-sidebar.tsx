@@ -11,9 +11,8 @@ const DashboardSidebar = () => {
 
     const firstSection = [
         { href: "/dashboard", icon: Home, label: "Home" },
-        { href: "/dashboard/analytics", icon: PieChart, label: "Analytics" },
-        { href: "/dashboard/users", icon: Users, label: "Users" },
-        { href: "/dashboard/reports", icon: FileText, label: "Reports" }
+        { href: "/agents", icon: PieChart, label: "Agents" },
+        { href: "/meetings", icon: Users, label: "Meetings" },
     ];
 
     const secondSection = [

@@ -46,7 +46,7 @@ export const AgentForm = ({
         trpc.agents.create.mutationOptions({
             onSuccess: async () => {
                 await queryClient.invalidateQueries(
-                    trpc.agents.getAll.queryOptions(),
+                    trpc.agents.getAll.queryOptions({}),
                 );
 
                 if (initialValues?.id) {
@@ -60,7 +60,7 @@ export const AgentForm = ({
                 toast.success("Create successful");
                 onSuccess?.();
             },
-            onError: (error) => {
+            onError: (error: any) => {
                 toast.error("Create failed", error);
                 //TODO - check if error code is forbidden, redirect to /upgrade
             }

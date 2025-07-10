@@ -4,10 +4,17 @@ import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Suspense } from 'react';
 import AgentListHeader from '@/modules/agents/ui/components/agent-list-header';
+import { SearchParams } from 'nuqs';
+import { loadSerachParams } from '@/modules/agents/params';
 
-const page = async () => {
+interface Props {
+    searchParams: Promise<SearchParams>
+}
+const page = async ({ searchParams }: Props) => {
+    const filters = await loadSerachParams(searchParams);
+
     const queryClient = getQueryClient();
-    void queryClient.prefetchQuery(trpc.agents.getAll.queryOptions());
+    void queryClient.prefetchQuery(trpc.agents.getAll.queryOptions({ ...filters }));
 
     return (
         <>
